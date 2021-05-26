@@ -1,0 +1,80 @@
+The first thing I did was get a refresher on the prisoner's dilemma. I didn't want to miss out on any of the provided resources, even if I thought I already understood them. So I watched the videos.
+
+Next I forked and cloned the repository and ran it to see how it worked. I messed around with a new strategy file to learn how the history and memory worked and reviewed the existing default strategies.
+
+Since I would be competing with a large amount of unknown strategies, I figured that to have the most robust strategy, I should really test my new one out on as many good strategies as I can. If I know I can beat them, I have a much better chance of winning the tournament.
+
+I implemented the following new strategies to my repository (trying to avoid collusion strategies but I did include probing strategies):
+(strategies come from https://medium.com/thinking-is-hard/a-prisoners-dilemma-cheat-sheet-4d85fe289d87#:~:text=Strategy%3A%20Start%20with%20Defect%2C%20Cooperate,our%20head%2C%20or%20shake%20hands.)
+    * firmButFair: Starts with cooperating, then switches to defecting if cooperated on the last turn and the opponent defected, then switches back to cooperating if both players defected on the last turn
+    * gradual: Starts with cooperating, then when the opponent defects for the nth time, defect for the next n turns then cooperate for the next two turns
+    * generous TFT: TFT but when the opponent defects, only defect back 90% of the time
+    * soft majority: cooperate if the opponent has cooperated at least half time, otherwise defect
+    * hard TFT: defects if the opponent has defected in any of the past 3 moves, otherwise cooperates
+    * two TFT: TFT but defects twice for every opponent defect
+    * soft grudger: always cooperates, but if the opponent defects, the next moves will be defect 4 times cooperate twice, then continue cooperating until next opponent defect
+    * suspicous TFT: TFT but start by defecting
+    * hard majority: same as soft majority but defects if the opponent has defected half of the time
+    * reverse TFT: starts by defecting then plays the opposite of the opponent's last move
+    * remorseful prober: acts like joss, but checks if the last 3 moves are all mutual defects, and cooperates on the next move if so as a form of forgiveness
+    * pavlov: run as TFT for the first 6 moves, then check the number of defects the opponent made in those 6 moves: if 0, continue playing as TFT; if 3, play FTFT; if greater than 4 or anything else, play always defect. Every 6 moves, compute player's average score and if the average is below 2.5, recompute a strategy based on the most recent 6 moves
+    * adaptive: (had to kind of make this one), test all possible pairs of moves (defect, defect; defect coop; coop defect; coop coop). After trying all of these, compute the average score for every occurrence of each of these 4 pairs. Whichever score is the highest, adopt that strategy for the next two moves, then do it agains
+
+To make my strategy evaluation more effective and less vulernable to randomness, I took influence from the video description and I modified the main script to create 10 different output scripts instead of just 1; it's not the same as running the tournament 100+ times and averaging the results into one output, but I didn't want to make too many changes to the original script and it's slightly better than before.
+
+My thought now is to run this script and have each of the provided and new strategies battle it out. Then my first attempt at a new strategy would be an adaptive one:
+    1. Identify the 10 best-scoring strategies of the bunch based on their average ranking
+        NOTE: I also crossed out any strategy that EVER lost to random as well as random itself. That just can't be a good strategy
+    2. Create a new strategy that tries each of the 10 strategies for 10 turns at a time and compute the average score
+    3. Continue doing the strategy with the best score for the rest of the round
+
+Running the script, I got these top 10 strategies:
+    Overall Rank    Name            Average Rank (out of 22)
+    10              firmButFair     9.8
+    9               grimTrigger     9
+    8               softGrudger     6.9
+    7               titForTat       6.4
+    6               ftft            5.6
+    5               pavlov          5.1
+    4               gradual         3.8
+    3               softMajority    3.3
+    2               hardMajority    3.1
+    1               generousTFT     2.5
+
+I ran my first strategy, and its average rank was 1.5 out of 23. That is extremely good!
+
+My next thought was that generousTFT's 10% rate was a bit arbitrary. What happens when we add other generousTFT rates (I took out my strategy for now)?
+
+Rate    Average Rank (out of 27)
+1       6.4
+5       3.2
+10      2.7
+25      8.3
+50      5.2
+66      15.4
+
+So it looks like 10% is likely to be the most optimal value.
+
+I decided to throw my strategy unchanged into the mix again to see how it fared. Out of 28, its average rank was 5.2, which was much worse than I was expecting. It ranked 14th in one tournament and 13th in another and only got 1st once.
+I wasn't too big of a fan of adding multiple variations of gtft into my strategy, but it couldn't hurt to try.
+
+10% was already in my mix. I decided to replace firmButFair with gtft 25%, grimTrigger with gtft 1%, softGrudger with gtft 50%, titForTat with gtft 5%
+
+After that, my average rank out of 28 was 7.7 with no 1st place tournaments and a worst rank of 16! What?
+
+Next I thought maybe I have too many strategies, so I removed all of the gtft variations other than the normal 10% and also removed forgiving TFT. That narrowed my number of strategies down to 5.
+
+After that, my average rank out of 28 was 6.6 with a 12th place, 13th place, and 2 1st place occurrences. Not quite there yet.
+
+Next I thought maybe I should include some of the % gftf variations back. I looked at the 10 results again to see which strategies were beating me.
+I removed softMajority and hardMajority and replaced them with 1% gftf and 5% gftf
+
+After that, my average rank out of 28 was 4.4 with one 12th place, 2 6th places, and 2 1st places. This is the best run I've had since adding the %gtft variations, but I'm still not happy with it.
+
+Next I decided to increase the number of trials from 10 to 20 for each strategy since there are only have as much as the original strategy.
+
+After that, my average rank out of 28 was 4. Here's the thing though: I never got 1st place and I placed 14th once. But I placed 2nd 4 times, 3rd 3 times, then 4th and 5th once each.
+
+So I tried shrinking the number of trials from 10 to 5 to see what would happen.
+
+After that, my average rank out of 28 was 3.7. My worst ranking was 8th followed by two 6th place finishes. I came in first twice. This is the best so far, but I'm still not perfectly happy with it.
